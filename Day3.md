@@ -177,5 +177,48 @@ END$$
 DELIMITER ;
 ```
 
+简化上述SQL代码
+
+```s
+DROP PROCEDURE IF EXISTS get_invoices_by_client;
+
+DELIMITER $$
+CREATE PROCEDURE get_invoices_by_client(client_id INT)
+BEGIN
+    SELECT * FROM clients c
+    WHERE c.client_id = IFNULL(client_id, c.client_id);
+END$$
+
+DELIMITER ;
+```
+
+- 检查传入的参数是否符合要求
+
+```s
+DROP PROCEDURE IF EXISTS make_payments;
+
+DELIMITER $$
+CREATE PROCEDURE make_payments(
+    invoice_id INT,
+    payment_amount DECIMAL(9, 2),
+    payment_date DATE
+)
+BEGIN
+    IF payment_amount <= 0 THEN
+        SIGNAL SQLSTATE '22003'  -- 错误编码
+	    SET MESSAGE_TEXT = 'Invalid payment amount';
+    END IF;
+    UPDATE invoices i
+    SET
+    	i.payment_total = payment_amount,
+	i.payment_date = payment_date
+    WHERE i.invoice_id = invoice_id;
+END$$
+
+DELIMITER ;
+```
+
+
 ### 1.3.2 传参给calling program
+
 
