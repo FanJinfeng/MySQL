@@ -336,5 +336,5 @@ FROM clients
 
 - attribute
  - DETERMINISTIC: 相同的输入，函数产生相同的输出
- - READS SQL DATA: 可以在函数中，使用select语句
- - MODIFIES SQL DATA: 可以在函数中，使用insert, update, delete语句
+ - READS SQL DATA: 可以在函数中使用select语句读取数据
+ - MODIFIES SQL DATA: 可以在函数中使用insert, update, delete语句
