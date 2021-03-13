@@ -218,7 +218,78 @@ END$$
 DELIMITER ;
 ```
 
+parameters: placeholder 传给procedure或者function的参数
+
+arguments: parameters的值
 
 ### 1.3.2 传参给calling program
 
+input parameter; output parameter
 
+```s
+DROP PROCEDURE IF EXISTS get_unpaid_invoices_for_client;
+
+DELIMITER $$
+CREATE PROCEDURE get_unpaid_invoices_for_client(
+    client_id INT,
+    OUT invoices_count INT,
+    OUT invoices_total DECIMAL(9, 2)
+)
+BEGIN
+    SELECT COUNT(*), SUM(invoice_total)
+    INTO invoices_count, invoices_total  -- 通过select语句赋值
+    FROM invoices i
+    WHERE i.client_id = client_id
+        AND payment_total = 0;
+END
+```
+
+```s
+set @invoices_count = 0;  -- 声明变量，并初始化
+set @invoices_total = 0;
+call sql_invoicing.get_unpaid_invoices_for_client
+    (2, @invoices_count, @invoices_total);
+select @invoices_count, @invoices_total;  -- 读取并输出
+```
+
+# 2. 变量
+
+## 2.1 user or session variable
+
+SET @name=0
+
+用于获取output parameters的值
+
+当断开与MySQL的连接时，释放缓存
+
+## 2.2 local variable
+
+DECLARE name INT
+
+定义在procedure或者function内部，用于计算
+
+当precodure或者function执行完成后，释放缓存
+
+```s
+DROP PROCEDURE IF EXISTS get_risk_factor;
+
+DELIMITER $$
+CREATE PROCEDURE get_risk_factor()
+BEGIN
+    -- risk_factor = invoices_total / invoices_count * 5
+    DECLARE risk_factor DECIMAL(9, 2) DEFAULT 0;
+    DECLARE invoices_total DECIMAL(9, 2);  -- 使用SELECT语句赋值
+    DECLARE invoices_count INT;
+    
+    SELECT COUNT(*), SUM(invoice_total  -- select语句赋值
+    INTO invoices_count, invoices_total
+    FROM invoices;
+    
+    SET risk_factor = invoices_total / invoices_count * 5;  -- 计算
+    
+    SELECT risk_factor;  -- 读取
+END
+```
+
+
+# 3. 函数
