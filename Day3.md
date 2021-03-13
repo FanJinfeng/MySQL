@@ -241,7 +241,9 @@ BEGIN
     FROM invoices i
     WHERE i.client_id = client_id
         AND payment_total = 0;
-END
+END$$
+
+DELIMITER ;
 ```
 
 ```s
@@ -288,8 +290,51 @@ BEGIN
     SET risk_factor = invoices_total / invoices_count * 5;  -- 计算
     
     SELECT risk_factor;  -- 读取
+END$$
+
+DELIMIETR ;
+```
+
+# 3. 函数
+
+function: 只能返回single value, RETURN 子句
+
+procedure: 可以返回result sets
+
+```s
+DROP FUNCTION IF EXISTS get_risk_factor_for_client;
+
+DELIMITER $$
+CREATE FUNCTION get_risk_factor_for_client(
+    client_id INT
+) 
+RETURNS int  -- 返回值的类型
+READS SQL DATA  -- attribute
+BEGIN
+    DECLARE risk_factor DECIMAL(9, 2) DEFAULT 0;  -- 设定默认值
+    DECLARE invoices_total DECIMAL(9, 2);  -- 使用SELECT语句赋值
+    DECLARE invoices_count INT;
+    
+    SELECT COUNT(*), SUM(invoice_total)
+    INTO invoices_count, invoices_total
+    FROM invoices i
+    WHERE i.client_id = client_id;
+    
+    SET risk_factor = invoices_total / invoices_count * 5;  -- 计算
+    
+    RETURN IFNULL(risk_factor, 0);
 END
 ```
 
+```s
+SELECT
+    client_id,
+    name,
+    get_risk_factor_for_client(client_id) AS risk_factor
+FROM clients
+```
 
-# 3. 函数
+- attribute
+ - DETERMINISTIC: 相同的输入，函数产生相同的输出
+ - READS SQL DATA: 可以在函数中，使用select语句
+ - MODIFIES SQL DATA: 可以在函数中，使用insert, update, delete语句
