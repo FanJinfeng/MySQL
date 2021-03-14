@@ -92,7 +92,7 @@ CREATE TABLE payments_audit
 
 - 记录insert操作
 ```s
-DROP TRIGGER IF EXISTS paymentS_after_insert;
+DROP TRIGGER IF EXISTS payments_after_insert;
 
 DELIMITER $$
 
@@ -139,3 +139,8 @@ VALUES (default, 5, 3, '2019-01-01', 10, 1);
 DELETE FROM payments
 WHERE payment_id = 9
 ```
+
+在现实中，不希望创建很多分离的表，例如payments_audit，来log changes；
+会使用general structure for logging changes (general audit tables)
+
+# 2. Events
