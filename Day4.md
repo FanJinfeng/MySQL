@@ -195,7 +195,7 @@ DELIMITER ;
   - interval_statement_otherthing- 
    - interval: hourly, daily, monthly, yearly, once(event 仅仅 trigger 一次)
 
-# 2.3 查看events
+## 2.3 查看events
 
 ```s
 SHOW EVENTS
@@ -206,13 +206,13 @@ SHOW EVENTS
 SHOW EVENTS LIKE 'yarly%';
 ```
 
-# 2.4 删除
+## 2.4 删除
 
 ```s
 DROP EVENT IF EXISTS yearly_delete_stale_audit_rows;
 ```
 
-# 2.5 更改
+## 2.5 更改
 
 <=> drop + recreate
 
@@ -281,11 +281,11 @@ SHOW VARIABLES LIKE 'autocommit';
 ```
 当执行一个single statement时, MySQL把其放入一个transaction中, 如果statement没有报错，就commit
 
-# 3. concurrency
+# 34. concurrency
 
 concurrency: 并发（多人同时处理同意数据）
 
-## 3.1 MySQL如何处理并发: default lock mechanism
+## 4.1 MySQL如何处理并发: default lock mechanism
 
 scenario：两个用户同时更新某个消费者的points
 
@@ -312,7 +312,7 @@ simulation
   - 分别执行两个session的前3行
 	第一个session的update在run, 因为当执行第一个update时，MySQL对要update的行put a lock；所以，如果另一个transaction试图update相同的行，它必须等到第一个transaction完成，either commited or rolled back.
 
-## 3.2 并发带来的问题
+## 4.2 并发带来的问题
 
 - lost updates
 
@@ -365,8 +365,10 @@ SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;  -- 设定session中transa
 SET GLOBAL TRANSACTION ISOLATION LEVEL SERIALIZABLE;  -- 更改系统默认transaction的isolation level
 ```
 
-## 3.4 read uncommitted
+## 4.3 read uncommitted
 
-## 3.5 read committed
+## 4.4 read committed
 
-## 3.6
+## 4.5 repeatable read
+
+## 4.6 serializable
