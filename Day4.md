@@ -346,8 +346,12 @@ transaction A 读取满足条件的数据，transaction B 更新数据，更新�
 
 ## 3.3 transaction isolation levels
 
-%%
-
+|  | lost updates | dirty reads | non-repeating reads | phantom reads |
+| ------ | ------ | ------ | ----- | ----- |
+| read uncommitted |  |  |  |  |
+| read committed |  | √ |   |   |
+| repeatable read | √ | √ | √ |  | 
+| serializable | √ | √ | √ | √ |
 
 随着isolation level的升级，将面临更多的performances和scalability问题，因为将会给transaction加更多的locks;
 
