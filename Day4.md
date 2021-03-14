@@ -143,4 +143,88 @@ WHERE payment_id = 9
 在现实中，不希望创建很多分离的表，例如payments_audit，来log changes；
 会使用general structure for logging changes (general audit tables)
 
-# 2. Events
+# 2. Events 事件
+
+定义：a block of SQL code, gets executed according to a schedule, 例如, 每天早上10点/once a month
+
+用法：自动完成数据库维护任务（database maintenance tasks），例如，delete data、copy data、aggregate data
+
+## 2.1 turn on MySQL even scheduler 调度程序
+
+查看所有的系统变量
+```s
+SHOW VARIABLES;
+```
+查看 event scheduler variable
+```s
+SHOW VARIABLES LIKE 'event%';
+```
+
+- use event
+run the background process: constantly looks for events to execute
+```s
+SET GLOBAL event_scheduler = ON
+```
+
+- save system resources
+```s
+SET GLOBAL event_scheduler = OFF
+```
+
+## 2.2 创建
+
+```s
+DELIMITER $$
+
+CREATE EVENT yearly_delete_stale_audit_rows
+ON SCHEDULE
+    -- AT ‘2019-05-01’  -- once
+    EVERY 1 YEAR STARTS '2019-01-01' ENDS '2029-01-01' -- on a regular basis
+DO BEGIN
+    DELETE FROM payments_audit
+    WHERE action_date < NOW() - INTERVAL 1 YEAR;  -- 删除older than one year 的记录
+    
+    -- DATEADD(NOW(), INTERVAL -1 YEAR)
+    -- DATESUB(NOW(), INTERVAL 1 YEAR)
+END$$
+
+DELIMITER ;
+```
+
+- 命名
+  - interval_statement_otherthing- 
+   - interval: hourly, daily, monthly, yearly, once(event 仅仅 trigger 一次)
+
+# 2.3 查看events
+
+```s
+SHOW EVENTS
+```
+
+查看每年执行一次的events
+```s
+SHOW EVENTS LIKE 'yarly%';
+```
+
+# 2.4 删除
+
+```s
+DROP EVENT IF EXISTS yearly_delete_stale_audit_rows;
+```
+
+# 2.5 更改
+
+<=> drop + recreate
+
+- change the schedule
+- change the SQL statement
+- 暂时的enable or sisable an event
+
+```s
+ALTER EVENT yearly_delete_stale_audit_rows DISABLE;
+ALTER EVENT yearly_delete_stale_audit_rows ENABLE;
+```
+
+# 3. Transaction 事务
+
+
