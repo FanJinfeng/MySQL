@@ -328,7 +328,7 @@ simulation
 
 transaction A 更新数据，transaction B 读取相同数据，transaction A ROLLBACK， transaction B 读取到了脏数据;
 
-对于事务，提出了"a level of isolation"，transaction更改的数据不会即刻被其他transaction看到，除非它被committed，即**read committed: transaction只能读取committed data**
+对于事务，提出了"a level of isolation"，transaction更改的数据不会即刻被其他transaction看到，除非它被committed，即"read committed: transaction只能读取committed data"
 
 - non-repeating or inconsistent reads
 
@@ -336,15 +336,16 @@ transaction A 更新数据，transaction B 读取相同数据，transaction A RO
 
 transaction A 读取数据，transaction B 更新数据，transaction A 两次读取得到不同的结果;
 
-在业务情形下，如果希望读取到更改前的值，那么应该 increase transaction A 的 isolation level，这样 transaction B 对数据的改变，transaction A 是不可见的，即**repeatable read：transaction获得第一次读取的数据**
+在业务情形下，如果希望读取到更改前的值，那么应该 increase transaction A 的 isolation level，这样 transaction B 对数据的改变，transaction A 是不可见的，即"repeatable read：transaction获得第一次读取的数据"
 
 - phantom reads 幽灵
 
 transaction A 读取满足条件的数据，transaction B 更新数据，更新后满足条件的数据（ghost）未被读取到；
 
-在业务情形下，如果希望得到所有满足条件的数据，那么应该保证其他所有影响条件的transaction都被committed，即**serializable：先执行所有影响读取结果的transaction，再执行读取的transaction**
+在业务情形下，如果希望得到所有满足条件的数据，那么应该保证其他所有影响条件的transaction都被committed，即"serializable：先执行所有影响读取结果的transaction，再执行读取的transaction"
 
 ## 3.3 transaction isolation levels
+
 
 |  | lost updates | dirty reads | non-repeating reads | phantom reads |
 | ------ | ------ | ------ | ----- | ----- |
@@ -356,3 +357,16 @@ transaction A 读取满足条件的数据，transaction B 更新数据，更新�
 随着isolation level的升级，将面临更多的performances和scalability问题，因为将会给transaction加更多的locks;
 
 MySQL默认的transaction isolation level是repeatable reads
+
+```s
+SHOW VARIABLES LIKE 'transaction_isolation';
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;  -- 设定下一个transaction的isolation level
+SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;  -- 设定session中transaction的isolation level
+SET GLOBAL TRANSACTION ISOLATION LEVEL SERIALIZABLE;  -- 更改系统默认transaction的isolation level
+```
+
+## 3.4 read uncommitted
+
+## 3.5 read committed
+
+## 3.6
