@@ -8,17 +8,28 @@
 # 1. string types
 
 ## 1.1 类型
-- CHAR(X)  
-  fixed-length strings
-- VARCHAR(X)  
-  variable-length strings;
-  max charactres: 65,535 (64KB);
-  可以加索引
-- MEDIUMTEXT
+(1) CHAR(X)  
+  
+fixed-length strings
+
+(2) VARCHAR(X)  
+  
+variable-length strings;
+  
+max charactres: 65,535 (64KB);
+  
+可以加索引
+
+(3) MEDIUMTEXT
+  
   max characters: 16 million (16MB); 
+  
   storing json object, cs view strings, ...
-- LONGTEXT  
+
+(4) LONGTEXT  
+  
   max: 4GB; 
+  
   storing text book, years of log files, ...
 
 - TINYTEXT 
