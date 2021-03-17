@@ -281,7 +281,7 @@ SHOW VARIABLES LIKE 'autocommit';
 ```
 当执行一个single statement时, MySQL把其放入一个transaction中, 如果statement没有报错，就commit
 
-# 34. concurrency
+# 4.concurrency 并发
 
 concurrency: 并发（多人同时处理同意数据）
 
@@ -344,7 +344,7 @@ transaction A 读取满足条件的数据，transaction B 更新数据，更新�
 
 在业务情形下，如果希望得到所有满足条件的数据，那么应该保证其他所有影响条件的transaction都被committed，即"serializable：先执行所有影响读取结果的transaction，再执行读取的transaction"
 
-## 3.3 transaction isolation levels
+## 4.3 transaction isolation levels
 
 
 |  | lost updates | dirty reads | non-repeating reads | phantom reads |
@@ -365,10 +365,164 @@ SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE;  -- 设定session中transa
 SET GLOBAL TRANSACTION ISOLATION LEVEL SERIALIZABLE;  -- 更改系统默认transaction的isolation level
 ```
 
-## 4.3 read uncommitted
+## 4.4 read uncommitted
 
-## 4.4 read committed
+读取uncommitted data, 将会有dirty reads
 
-## 4.5 repeatable read
+- first session
+```s
+USE sql_store;  -- step 1
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;  -- step 2
+SELECT points  -- step 6
+FROM customers
+WHERE customer_id = 1;
+```
 
-## 4.6 serializable
+- second session
+```s
+USE sql_store;  -- step 3
+START TRANSACTION;  -- step 4
+UPDATE customers  -- step 5
+SET points = 20
+WHERE customer_id = 1;
+ROLLBACK;  -- step 7
+```
+
+读取到points=20, 实际上rollback后points没有改成20
+
+## 4.5 read committed
+
+- first session
+```s
+USE sql_store;  -- step 1
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;  -- step 2
+SELECT points  -- step 6 / step 8
+FROM customers
+WHERE customer_id = 1;
+```
+
+- second session
+```s
+USE sql_store;  -- step 3
+START TRANSACTION;  -- step 4
+UPDATE customers  -- step 5
+SET points = 20
+WHERE customer_id = 1;
+COMMIT;  -- step 7
+```
+
+第一次读取到points=2313, commit后，读取到points=20
+
+- first session
+```s
+USE sql_store;  -- step 1
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;  -- step 2
+STRAT TRANSACTION;  -- step 3
+SELECT points FROM customers WHERE customer_id = 1;  -- step 4
+SELECT points FROM customers WHERE customer_id = 1;  -- step 9
+COMMIT;  -- step 10
+```
+
+- second session
+```s
+USE sql_store;  -- step 5
+START TRANSACTION;  -- step 6
+UPDATE customers  -- step 7
+SET points = 30
+WHERE customer_id = 1;
+COMMIT;  -- step 8
+```
+
+第一次读取到points=20, 第二个session commit后, 读取到points=30
+
+## 4.6 repeatable read
+
+- first session
+```s
+USE sql_store;  -- step 1
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;  -- step 2
+START TRANSACTION;  -- step 3
+SELECT points FROM customers WHERE customer_id = 1;  -- step 4
+SELECT points FROM customers WHERE customer_id = 1;  -- step 9
+COMMIT;  -- step 10
+```
+
+- second session
+```s
+USE sql_store;  -- step 5
+START TRANSACTION;  -- step 6
+UPDATE customers  -- step 7
+SET points = 40
+WHERE customer_id = 1;
+COMMIT;  -- step 8
+```
+
+第一次读取到points=30, 第二个session commit后, 读取到points=30
+
+- first session
+```s
+USE sql_store;  -- step 1
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;  -- step 2
+START TRANSACTION;  -- step 3
+SELECT * FROM customers WHERE state = 'VA';  -- step 4 / step 9
+COMMIT; - step 10
+```
+
+- second session
+```s
+USE sql_store;  -- step 5
+START TRANSACTION;  -- step 6
+UPDATE customers  -- step 7
+SET state = 'VA'
+WHERE customer_id = 1;
+COMMIT;  -- step 8
+```
+
+第一次读取得到一条记录，第二个session commit后，再次读取仍得到一条记录（repeatable read）
+
+## 4.7 serializable
+
+- first session
+```s
+USE sql_store;  -- step 1
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;  -- step 2
+START TRANSACTION;  -- step 3
+SELECT * FROM customers WHERE state = 'VA';  -- step 7
+COMMIT; -- step 9
+```
+
+- second session
+```s
+USE sql_store;  -- step 4
+START TRANSACTION;  -- step 5
+UPDATE customers  -- step 6
+SET state = 'VA'
+WHERE customer_id = 1;
+COMMIT;  -- step 8
+```
+
+# 5. deadlocks
+
+不同的transaction不能complete, 因为每个transaction有一个lock, 这个lock是另一个transaction需要的, 它们都在等在对方commit
+
+- first session
+```s
+USE sql_store;  -- step 1
+START TRANSACTION;  -- step 2
+UPDATE customers SET state = 'VA' WHERE customer_id = 1;  -- step 3
+UPDATE orders SET status = 1 WHERE order_id = 1;  -- step 8
+COMMIT;
+```
+
+- second session
+```s
+USE sql_store;  -- step 4
+START TRANSACTION;  -- step 5
+UPDATE orders SET status = 1 WHERE order_id = 1;  -- step 6
+UPDATE customers SET state = 'VA' WHERE customer_id = 1;  -- step 7
+COMMIT;
+```
+
+如果你总是检测到在两个transaction间存在deadlocks：
+- 你可以检查代码中更新多条记录的顺序，使它们保持相同的顺序
+- 保持transaction small & short
